@@ -24,7 +24,6 @@ def label_text_file(pdf_path):
 def txt_pdf_process(pdf_path, user_input):
 # user_input ="What is the exact work experience tenure"
     text = label_text_file(pdf_path)
-    # Pass the user's input to the chat function
     response: ChatResponse = chat(
         model='llama3.2',
         messages=[
