@@ -4,6 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import tempfile
 import uvicorn
 from fastapi import FastAPI, UploadFile, Form
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import Optional
 from text_based_ext.txt_extraction import txt_pdf_process
@@ -11,6 +12,14 @@ from image_based_ext.img_extract import image_pdf_process
 import fitz
 
 app = FastAPI() 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def is_text_pdf(file_path: str) -> bool:
     try:
@@ -48,4 +57,4 @@ async def process_pdf(file: UploadFile, prompt: Optional[str] = Form(...)):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)
