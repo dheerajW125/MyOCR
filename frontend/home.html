@@ -8,8 +8,12 @@
         /* General Styling */
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             background-color: #f4f4f9;
         }
 
@@ -20,11 +24,13 @@
 
         .container {
             max-width: 500px;
+            width: 90%;
             margin: 0 auto;
             padding: 20px;
             border-radius: 15px;
             background: white;
             box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
         }
 
         /* Upload Button Styles */
@@ -56,6 +62,12 @@
             width: 100%;
             height: 100%;
             cursor: pointer;
+        }
+
+        .upload-status {
+            font-size: 14px;
+            margin-top: 10px;
+            color: gray;
         }
 
         @keyframes flicker {
@@ -104,8 +116,8 @@
 
         /* Textarea */
         textarea {
-            width: 80%;
-            height: 200px;
+            width: 100%;
+            height: 250px;
             margin: 20px auto;
             padding: 10px;
             font-size: 14px;
@@ -117,6 +129,41 @@
         textarea:focus {
             outline: none;
             border-color: #4CAF50;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            height: 30px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            margin: 0 5px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            animation: blink 1.4s infinite;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes blink {
+            0%, 80%, 100% {
+                opacity: 0;
+            }
+            40% {
+                opacity: 1;
+            }
         }
 
         /* Responsiveness */
@@ -149,9 +196,16 @@
                     <polyline points="16 16 12 12 8 16"></polyline>
                 </svg>
             </div>
+            <p id="uploadStatus" class="upload-status">No file uploaded.</p>
             <input type="text" id="prompt" name="prompt" placeholder="Enter your prompt..." required>
             <button type="submit">Submit</button>
         </form>
+
+        <div id="loadingSpinner" class="loading" style="display: none;">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
 
         <div id="result">
             <h3>Extracted Text:</h3>
@@ -160,38 +214,56 @@
     </div>
 
     <script>
+        const fileInput = document.querySelector('.input');
+        const uploadDiv = document.querySelector('.input-div'); // Select the upload button container
+        const uploadStatus = document.getElementById('uploadStatus');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const output = document.getElementById('output');
+    
+        // File upload status update
+        fileInput.addEventListener('change', () => {
+            const fileName = fileInput.files[0]?.name;
+    
+            if (fileName) {
+                uploadStatus.textContent = `File "${fileName}" uploaded successfully.`;
+                uploadDiv.style.animation = 'none'; // Stop the blinking animation
+            } else {
+                uploadStatus.textContent = 'No file uploaded.';
+            }
+        });
+    
+        // Form submission with loading spinner
         document.getElementById('ocrForm').addEventListener('submit', async (event) => {
             event.preventDefault();
-
+    
             const formData = new FormData();
-            const fileInput = document.querySelector('.input');
-            const promptInput = document.getElementById('prompt');
-
             formData.append('file', fileInput.files[0]);
-            formData.append('prompt', promptInput.value);
-
-            // Clear previous results
-            document.getElementById('output').textContent = "";
-
+            formData.append('prompt', document.getElementById('prompt').value);
+    
+            // Show loading spinner
+            loadingSpinner.style.display = 'flex';
+            output.textContent = "";
+    
             try {
                 const response = await fetch('http://127.0.0.1:8000/process_pdfs', {
                     method: 'POST',
                     body: formData,
                 });
-
+    
                 if (response.ok) {
                     const data = await response.json();
-                    document.getElementById('output').textContent = data.msg || 'No content extracted.';
+                    output.textContent = data.msg || 'No content extracted.';
                 } else {
                     const errorData = await response.json();
-                    document.getElementById('output').textContent = errorData.error || 'An error occurred.';
+                    output.textContent = errorData.error || 'An error occurred.';
                 }
             } catch (error) {
-                document.getElementById('output').textContent = `Request failed: ${error.message}`;
+                output.textContent = `Request failed: ${error.message}`;
+            } finally {
+                // Hide loading spinner
+                loadingSpinner.style.display = 'none';
             }
         });
     </script>
-</body>
+    
 </html>
-
-
